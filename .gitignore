@@ -1,3 +1,13 @@
+# Data files
+
+x_test.txt
+x_train.txt
+y_test.txt
+y_train.txt
+
+
+# GitHubs template for Python project
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
