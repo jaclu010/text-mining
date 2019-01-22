@@ -116,12 +116,12 @@
 % *** GRAPHICS RELATED PACKAGES ***
 %
 \ifCLASSINFOpdf
-  % \usepackage[pdftex]{graphicx}
+  \usepackage[pdftex]{graphicx}
   % declare the path(s) where your graphic files are
-  % \graphicspath{{../pdf/}{../jpeg/}}
+  \graphicspath{{./figures/}}
   % and their extensions so you won't have to specify these with
   % every instance of \includegraphics
-  % \DeclareGraphicsExtensions{.pdf,.jpeg,.png}
+  \DeclareGraphicsExtensions{.pdf,.jpeg,.png}
 \else
   % or other class option (dvipsone, dvipdf, if not using dvips). graphicx
   % will default to the driver specified in the system graphics.cfg if no
@@ -159,7 +159,7 @@
 
 % *** MATH PACKAGES ***
 %
-%\usepackage{amsmath}
+\usepackage{amsmath}
 % A popular package from the American Mathematical Society that provides
 % many useful and powerful commands for dealing with mathematics.
 %
@@ -291,15 +291,14 @@
 
 % *** PDF, URL AND HYPERLINK PACKAGES ***
 %
-%\usepackage{url}
+\usepackage{url}
 % url.sty was written by Donald Arseneau. It provides better support for
 % handling and breaking URLs. url.sty is already installed on most LaTeX
 % systems. The latest version and documentation can be obtained at:
 % http://www.ctan.org/pkg/url
 % Basically, \url{my_url_here}.
 
-
-
+\usepackage{adjustbox}
 
 % *** Do not adjust lengths that control margins, column widths, etc. ***
 % *** Do not use packages that alter fonts (such as pslatex).         ***
@@ -320,7 +319,7 @@
 % not capitalized unless they are the first or last word of the title.
 % Linebreaks \\ can be used within to get better formatting as desired.
 % Do not put math or special symbols in the title.
-\title{TDDE16 Text Mining Project\\ Language Detection}
+\title{Monolingual Written Natural Language Identification with Naïve Bayes and LSTMs}
 
 
 % author names and affiliations
@@ -379,7 +378,7 @@ Email: jaclu010@student.liu.se}}
 % As a general rule, do not put math, special symbols or citations
 % in the abstract
 \begin{abstract}
-The abstract goes here.
+  This project aims to correctly classify the language of written text paragraphs. Given a paragraph from the WiLi dataset, one out of 235 languages can be classified. Chosen model solutions to the classification problem is a Naïve Bayes model and an LSTM. They reach a classification accuracy of 93.87\% and 63.87\% respectively. The Naïve Bayes model performs a lot better than the author of the WiLi dataset's neural network model, which achieves an accuracy of 88\%.
 \end{abstract}
 
 % no keywords
@@ -389,9 +388,9 @@ The abstract goes here.
 
 % For peer review papers, you can put extra information on the cover
 % page as needed:
-% \ifCLASSOPTIONpeerreview
-% \begin{center} \bfseries EDICS Category: 3-BBND \end{center}
-% \fi
+\ifCLASSOPTIONpeerreview
+\begin{center} \bfseries EDICS Category: 3-BBND \end{center}
+\fi
 %
 % For peerreview papers, this IEEEtran command inserts a page break and
 % creates the second title. It will be ignored for other modes.
@@ -401,24 +400,208 @@ The abstract goes here.
 
 \section{Introduction}
 % no \IEEEPARstart
-This demo file is intended to serve as a ``starter file''
-for IEEE conference papers produced under \LaTeX\ using
-IEEEtran.cls version 1.8b and later.
+The art of identifying the language in a text has been around a long time. It is something we humans do on a daily basis. The agent in question needs to understand what language is being read to interpret it correctly. It is an essential part of the pipeline of understanding text. 
+
+In this project, the Wi-Li dataset~\cite{wili} is evaluated. The dataset in question contains phrases from Wikipedia in 235 different languages with a thousand (1000) paragraphs from each language.
+
+As described by Thoma~\cite{wili}, a Multi-Layer Perceptron with character-based tf-idf features is implemented and achieves an overall accuracy of 88\%. Also, many existing classifiers are tested against said dataset but only reach a prediction accuracy of 22-36\%. The lousy performance is due to these classifiers only being implemented for a subset of languages existing in this dataset. The lack of existing solutions to both suggested classifiers by Thoma and other state-of-the-art models (to the WiLi dataset) makes for an exciting project. Thoma specifically states that models such as Naïve Bayes and recurrent neural networks (RNN) should be investigated further.
+
+As mentioned by Mathur et. al. \cite{lide}, Naive
+Bayes, SVM, n-gram, graph-based n-gram and,
+prediction partial matching (PPM) are models that have been used for the task of language identification. Neural networks, specifically long short-term memory (LSTM) models in conjunction with word embeddings is currently popular in various natural language processing (NLP) tasks \cite{twitter, boundary, intent}. Also, Mathur et. al. reports success in the use of RNNs for the task of language identification \cite{lide}.
+
+The idea of this project is to use a Naïve Bayes model as a baseline and then see if improvement is made with an advanced model, an LSTM neural network. The proposed LSTM consists of sequences of character n-grams.
+
 % You must have at least 2 lines in the paragraph with the drop letter
 % (should never be an issue)
-I wish you the best of success.
 
-\hfill mds
+%\hfill jl
  
-\hfill August 26, 2015
+%\hfill January 10, 2019
 
-\subsection{Subsection Heading Here}
-Subsection text here.
+\section{Theory}
+This chapter will briefly describe the necessary theory, i.e. the theory behind the models used.
+
+\subsection{tf-idf}
+tf-idf is a common feature selection technique in NLP tasks. It is a short for \textit{term frequency - inverse document frequency} and it is a model to evaluate how relevant a word is given a set of documents.
+
+Given a collection of $N$ documents, the frequency $f$ of word $i$ in document $j$ helps define the \textit{term frequency} $tf$ as 
+
+$$tf_{i,j}= \frac{f_{i,j}}{\textnormal{max}_k f_{k,j}} \textnormal{,}$$
+
+where $\textnormal{max}_kf_{k,j}$ denotes the word in the document with the highest frequency. This means that the word $j$ is normalized on the maximum occurance of any word in the document.
 
 
-\subsubsection{Subsubsection Heading Here}
-Subsubsection text here.
+Then, suppose word $i$ occures in $n_i$ out of the $N$ documents. Then, the \textit{inverse document frequency} is defined as.
 
+$$idf_i = \log_2(\frac{N}{n_i})\textnormal{.}$$
+
+Finally, the two numbers are multiplied,
+
+$$ tf\textnormal{-}idf = tf_{i,j} \times idf_i$$ 
+
+\noindent and the word with the highest score usually carry most information about a document. \cite{tfidf}
+
+\subsection{Multinomial Naïve Bayes}
+A Naïve Bayes model is a derivation of a graph structure organized in such a way that there is assumed independence between all covariates.
+
+Given a class $C_k$ out of $k$ possible classes and a word $x_i \in \boldsymbol{X}$, where $\boldsymbol{X}$ is the corpus, the probability of a specific class is given by
+
+
+$$p(C_k, \boldsymbol{X}) = p(C_k) \prod_{i=1}^n p(x_i | C_k) \textnormal{.}$$
+
+\noindent This is derived from Baye's theorem and the independence assumption between all $x_i \in \boldsymbol{X}$. \cite{ai-book}
+
+Given this formula, in the classification problem, one would have to compute the probability for each class and pick the class with the highest probability as a classification \cite{itir}.
+
+\subsection{Word embeddings}
+Neural networks cannot on their own understand a text in string format. The strings need to be transformed into numbers or vectors. \textit{fastText} is one such model and it is a part of a theory called \textit{word embeddings}. 
+
+fastText produces embedding vectors by looking at each n-gram of a word with a size of 3-6 characters. Then, a vector representation is assigned to each n-gram. Finally, the sum of the n-gram vectors represents the final embedding for the word. \cite{fasttext}
+
+An advantage of fastText compared with Google's \textit{word2vec} \cite{word2vec} is that fastText can produce embeddings on words not yet seen in the data while training, otherwise known as out-of-vocabulary words. The advantage is limited to that at least some n-gram of a word were present during training. \cite{fasttext}
+
+As described in the original paper, Mikolov et. al. \cite{word2vec} uses 1.6 billion words to train a 300 unit long word vector.
+
+\subsection{LSTM}
+An LSTM is one of many types of RNNs, specifically \textit{gated RNNs}. It is based on an idea that there can be paths throughout a sequence of inputs. This idea is closely related to another feature within the field called \textit{leaky units}. These paths carry information that may be accumulated through the sequence. As an opposite, it also means that some time information should be forgotten, which is also a feature within gated networks. \cite{dl-book}
+
+\begin{figure}[h]
+  \centering
+      \includegraphics[scale=0.35]{LSTM}
+        \caption{Layout of an LSTM cell}
+        \label{fig:lstm}      
+\end{figure}
+
+The remainder of this section is a summary of previous work by Wang and Raj \cite{nnorigin}. Figure \ref{fig:lstm} shows a layout of a simple LSTM cell. One cell is responsible for one of the sequential inputs. 
+
+\subsubsection{States}
+States can be described as values passed between cells. In particular, the cell state $c_t$ is the memory of the cell (\textit{a)} in figure \ref{fig:lstm}) and can be passed on to other cells and layers. The hidden state $h_t$ can also be passed between cells and layers.
+
+The input state is the linear combination of the previous hidden state and the input,
+called $i_t$:
+
+$$i_t=\sigma(W_{ix}x_t+W_{ih}h_{t-1})\textnormal{,}$$
+
+where $W_{ab}$ are the corresponding weights and $\sigma$ denotes the \textit{sigmoid} function.
+
+\subsubsection{Gates}
+Gates in general uses the \textit{sigmoid} function to prune information or let it pass through a certain spot, since the function assumes a value on $[0,1]$ and the gate is multiplied to the corresponding spot. 
+
+The \textit{forget gate}, $f_t$ (\textit{b)}), decides wether or not to keep the cell state from the previous time step. It is denoted with
+
+$$f_t=\sigma(W_{fi}i_t)\textnormal{.}$$
+
+The \textit{input gate}, $g_t$ (\textit{c)}), decides if the input state should be fed into the cell state. It is denoted by
+
+$$g_t=\sigma(W_{gi}i_t)\textnormal{.}$$
+
+Finally, there is the \textit{output gate}, $o_t$ (\textit{d)}), which decides if the current state is passed on as hidden state to the next cell,
+
+$$o_t=\sigma(W_{oi}i_t)\textnormal{.}$$
+
+These gates decide the flow of information, the final formula for the cell state is
+
+$$c_t = g_t \odot i_t + f_t c_{t-1}\textnormal{,}$$
+
+where $\odot$ denotes the element wise product. The hidden state is updated by
+
+$$h_t = o_t \odot c_t\textnormal{.}$$
+
+A common issue with RNNs is the vanishing/exploding gradient problem \cite{dl-book}. As gradients are backpropagated through the network, they tend to vanish or explode. In a lot of places, 3 times in figure \ref{fig:lstm}, values are multiplied. If the gradient then is continuously multipled with values smaller than one, the gradient will soon enough approach zero. The opposite is also the case when the gradient is continuously multiplied with a value larger than one.
+
+\section{Data}
+This chapter references Thoma \cite{wili}. As said, the dataset consists of 235 languages with text extracted from Wikipedia. Each language consists of 1000 paragraphs of text, making it a total of 235 000 paragraphs. The paragraphs were generated from random Wikipedia pages that consist of at least 140 characters in Unicode format. The dataset is already split into train and test data with 117 500 paragraphs each. Each of these sets are combined with labels of the language in pair with each paragraph.  The dataset is available online\footnote{https://doi.org/10.5281/zenodo.841984}.
+
+\subsection{Balancing}
+Even though each language contains a balanced amount of paragraphs, it does not mean that the paragraphs themselves are balanced. As an example, the shortest paragraph is 140 Unicode points long while the longest is 195 402 Unicode points long. The average length is 371 Unicode points.
+
+\subsection{Issues in the dataset}
+Thoma presents 5 distinct error sources within the data. The most disturbing are presented below.
+
+\subsubsection{References} \label{E1}
+Sometimes, books or other authors are mentioned in the article in question and is often written in the original language, which often is English. A concrete example is the second paragraph from the training set:
+
+\textit{Sebes, Joseph; Pereira Thomas (1961) (på eng). The Jesuits and the Sino-Russian treaty of Nerchinsk (1689): the diary of Thomas Pereira. Bibliotheca Instituti historici S. I., 99-0105377-3 ; 18. Rome. Libris 677492}
+
+The paragraph is from the Swedish Wikipedia, because of the string \textit{(på eng)}, which makes this paragraph hard to classify correct.
+
+\subsubsection{Translation} \label{E2}
+Some Wikipedia pages have english translations. A notable example is from the Tonganese Wikipedia \footnote{https://to.wikipedia.org/wiki/Sione\_Tupou\_Mateialona/en}.
+
+\subsubsection{Quotes} \label{E3}
+Many articles contain quotes, which are often written in the original language. This error is closely related to Section \ref{E1}.
+
+%\subsubsection{Bias}
+%Different authors have different writing styles. This also applies to the type of %article. A scientific article is expected to have different properties. 
+
+
+\section{Method}
+This chapter describes the steps taken to produce results. All implementation is done in Jupiter notebooks\footnote{https://jupyter.org/}, with Python 3\footnote{https://python.org/} as programming language. The resulting implementation is available online\footnote{https://github.com/jaclu010/text-mining}.
+
+\subsection{Data collection}
+The dataset consists of four \textit{.txt}-files. That is the train an test data along with their labels. On top of this, a sheet with more information regarding language shortenings was shipped with the data.
+
+\subsection{Pre-processing}
+The data consists of long paragraphs of text. As the data is not pre-processed in any way before, there still exists punctuation marks, spaces and other delimiters that may have an impact on the final performance. Therefore a regular expression is applied to each paragraph with the intent to remove all punctuation marks and to some extent correctly split words. 
+
+Cleaning the data was harder than expected since Chinese, for example, uses another Unicode character for a comma in comparison to English. This and other examples based on primarily \cite{wikc, wikl, wikt} were added to the regular expression. This pre-processing was enough for the Naïve Bayes model. 
+
+\subsubsection{LSTM pre-processing}
+For the LSTM model, a fastText word embedding was trained on the data. The fastText model used a vector size of 100 with a 10 iteration training procedure. The fastText model was created with the \textit{Gensim}\footnote{https://radimrehurek.com/gensim/models/fasttext.html} implementation in Python. In total, 6 695 838 words were used to train the vector model.
+
+Then, each word in a paragraph was concatenated with a blank space. After which all possible penta-grams of the paragraph in question were generated. Also, each paragraph was transformed into a sequence of 10 consecutive penta-grams. This made the dataset very large. To reduce the dataset, only 20\% of the training set and 10\% of the test set were used, chosen randomly with a uniform distribution. Also 10\% of the training data was used as validation data.
+
+\subsection{Multinomial Naïve Bayes}
+This model was implemented with \textit{sk-learn}'s\footnote{https://scikit-learn.org/} implementation of the Naïve Bayes model. First, a \textit{count vectorizer} was applied onto the training data, which counts occurrences of each word creating a 2D matrix with documents and counts.
+
+Two models were created. One which only uses the previously mentioned count matrix (further referenced as \textit{NB-cv}) and the second which converts the count matrix to \textit{tf-idf} scores before training (further referenced as \textit{NB-tf-idf}).
+
+The test set was then transformed into a count matrix which is used by both models to make predictions. The models kept an internal mapping to the language in question and were able to produce language labels. Thus, the data was ready for evaluation.
+
+\subsection{LSTM}
+The LSTM model was created with \textit{Keras}\footnote{https://keras.io/} with \textit{Tensorflow}\footnote{https://www.tensorflow.org/} as backend.
+
+The model consists of three layers. One LSTM layer with 100 LSTM units, a dropout layer with a dropout fraction of 0.4 and finally a softmax output layer with 235 neurons, one for each language. For each input, the index of the softmax neuron with the highest score is the resulting prediction.
+
+\subsection{Evaluation}
+ Evaluation was done by calcuating accuracy, precision, recall and F1-score.
+
+\section{Results}
+This section presents the results obtained. They are shown as percentages in table \ref{tbl:results}. A detailed confusion matrix for the NB-cv model can be found in Appendix \ref{appendix}, figure \ref{fig:conf_mat_cv} and for the LSTM model in figure \ref{fig:conf_mat_lstm}. 
+
+\begin{table}[h]
+  \caption{Results for the classifiers, numbers in percent \%}
+  \label{tbl:results}
+  \centering
+  \begin{tabular}{l|l|l|l}
+    \textbf{\%}              & \textbf{NB-cv} & \textbf{NB-tf-idf} & \textbf{LSTM}                       \\ \hline
+    \textbf{Accuracy}        & 93.87          & 92.99              & \multicolumn{1}{l|}{63.87}          \\ \hline
+    \textbf{Macro precision} & \textbf{95.89} & \textbf{95.25}     & \multicolumn{1}{l|}{\textbf{69.27}} \\ \hline
+    \textbf{Micro precision} & 93.87          & 92.99              & \multicolumn{1}{l|}{63.87}          \\ \hline
+    \textbf{Recall}          & 93.87          & 92.99              & \multicolumn{1}{l|}{63.87}          \\ \hline
+    \textbf{F1-score}        & 94.39          & 93.52              & \multicolumn{1}{l|}{59.34}         
+    \end{tabular}
+\end{table}
+
+In table \ref{tbl:results}, regarding model NB-cv, it is noted that 2411 paragraphs are classified as English. The same phenomena is noted for the LSTM model where 2216 paragraphs are classified as English. Thus, a lot of paragraphs are wrongly classified and manual inspection shows indication of errors mentionend in Sections \ref{E1}, \ref{E2} and, \ref{E3}. 
+
+The LSTM model performs a lot worse on all aspects. Also noted was the training set accuracy of 39.22\% and validation set accuracy of 46.30\%.
+
+
+\section{Discussion} \label{discussion}
+
+Naïve Bayes work extremely well in this setting. The NB-cv model (94\% accuracy) is notably better than Thoma's 88\% accuracy neural network. It is also notable that the model performs better when only the \textit{count vectorized} data is used, compared to \textit{tf-idf} transformed data. The performance increase can be explained by features that \textit{tf-idf} intend to scale down is of some use. A frequently appearing sequence of characters in English is \textit{the}. However, these three characters are also a good indication that the language in question \textit{is} English; hence it might answer the improved performance. Also, some languages have unique characters that only their language use, resulting in small to none overlap regarding prediction probabilities. Mathur et al. \cite{lide} also concludes this fact.
+
+The LSTM model did not perform as well as expected. A lot of the times, overfitting the training data was a common problem. Despite numerous attempts to prevent overfitting, it happened already on the second epoch. Another sign of a poor fit is the difference in training and test set accuracy. A poor fit may be the result of numerous errors sources; the size of the word embedding vector; the type of n-gram used; not enough dropout in the model; the type of optimizer and, the layout of the model. Not only do the results disappoint but it also proves the difficulty of the classification task. Also, since the results of the models differ a lot, no discussion is made concerning the different metrics used.
+
+One solution that Mathur et al. \cite{lide} proposes and uses is an ensemble of RNN classifiers with different type of n-grams, which, in their case improve performance. There are multiple ways of improving the model in this project. As an example, only penta-grams were used as a feature. As so, the model can be extended to multiple n-grams or different types of n-grams.
+
+As previously stated, the original \textit{word2vec} uses 1.6 billion words to train a word vector. The model of this project uses a corpus that is 250 times smaller. At the same time, this relatively small corpus need to account for 235 languages. The small corpus is an issue that impacts performance, as it might introduce unwanted relationships between word vectors. 
+
+Some languages have no word boundaries and the fact that one character can represent multiple words, which means that a regular space might not always be a good split between words. All models used in this project is based on space delimited words, and it probably has some impact. However, the NB-cv model still performs very well. A way to tackle this issue is to use byte-grams, where an entire paragraph is split into n-grams taking all delimiters into account.
+
+The dataset shows multiple occurrences were the paragraphs contain mostly English words. It leaves room for errors as even a human could have misunderstood the language of a paragraph. A good example of this is already mentioned in Section \ref{E1}. Manual inspection of all paragraphs is a cumbersome project, but the error sources mentioned in Sections \ref{E1}, \ref{E2}, \ref{E3} and, described by Thoma \cite{wili} do contribute to a decrease in performance. However, in many circumstances today, multiple languages appear together. The added noise to the data proves that our models (at least NB-cv and NB-tf-idf) are very robust.
 
 % An example of a floating figure using the graphicx package.
 % Note that \label must occur AFTER (or within) \caption.
@@ -518,7 +701,9 @@ Subsubsection text here.
 
 
 \section{Conclusion}
-The conclusion goes here.
+A simple model such as Naïve Bayes works extremely well in this setting. At this time the NB-cv model is, to my knowledge, the best performing model on the WiLi dataset, with an accuracy of 93.87\%.
+
+The LSTM needs further development. Some are discussed in Section \ref{discussion}. This is an example when the time invested in developing an advanced neural network might not be worth it when the Naïve Bayes model performs extremely good.
 
 
 
@@ -527,10 +712,10 @@ The conclusion goes here.
 
 
 % use section* for acknowledgment
-\section*{Acknowledgment}
+%\section*{Acknowledgment}
 
 
-The authors would like to thank...
+%The authors would like to thank...
 
 
 
@@ -551,24 +736,36 @@ The authors would like to thank...
 % http://mirror.ctan.org/biblio/bibtex/contrib/doc/
 % The IEEEtran BibTeX style support page is at:
 % http://www.michaelshell.org/tex/ieeetran/bibtex/
-%\bibliographystyle{IEEEtran}
+\bibliographystyle{IEEEtran}
 % argument is your BibTeX string definitions and bibliography database(s)
-%\bibliography{IEEEabrv,../bib/paper}
+\bibliography{ref}
 %
 % <OR> manually copy in the resultant .bbl file
 % set second argument of \begin to the number of references
 % (used to reserve space for the reference number labels box)
-\begin{thebibliography}{1}
+%\begin{thebibliography}{1}
 
-\bibitem{IEEEhowto:kopka}
-H.~Kopka and P.~W. Daly, \emph{A Guide to \LaTeX}, 3rd~ed.\hskip 1em plus
-  0.5em minus 0.4em\relax Harlow, England: Addison-Wesley, 1999.
+%\bibitem{IEEEhowto:kopka}
+%H.~Kopka and P.~W. Daly, \emph{A Guide to \LaTeX}, 3rd~ed.\hskip 1em plus
+%  0.5em minus 0.4em\relax Harlow, England: Addison-Wesley, 1999.
 
-\end{thebibliography}
+%\end{thebibliography}
 
-
-
-
+\appendix%{Confusion matrices}
+\section{Confusion matrices}
+\label{appendix}
+\begin{figure*}[h]
+  \centering
+      \includegraphics[width=\textwidth]{conf_mat_cv}
+		\caption{Confusion matrix for the NB-cv model. The color bar shows prediction counts where black is zero and white is 500}
+		\label{fig:conf_mat_cv}      
+\end{figure*}
+\begin{figure*}[h]
+  \centering
+      \includegraphics[width=\textwidth]{conf_mat_lstm}
+		\caption{Confusion matrix for the NB-cv model. The color bar shows prediction counts where white is zero and black is 500}
+		\label{fig:conf_mat_lstm}      
+\end{figure*}
 % that's all folks
 \end{document}
 

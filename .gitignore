@@ -4,7 +4,9 @@ x_test.txt
 x_train.txt
 y_test.txt
 y_train.txt
-
+TDDE16-2018-PRA1*
+.vscode
+not_used/*
 
 # GitHubs template for Python project
 
